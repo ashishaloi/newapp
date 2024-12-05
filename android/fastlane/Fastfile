@@ -4,14 +4,22 @@ platform :android do
   desc "Build APK and upload to Google Drive"
   lane :upload_to_drive do
     # Build the release APK
-    gradle(task: "assembleRelease")
+    gradle(task: "clean assembleRelease")
+    # gradle(task: "assembleRelease")
 
     # Authenticate with Google Drive
-    google_drive(
-      service_account_json_path: "credentials.json",  # Path to your JSON file
-      upload_file: "./app/build/outputs/apk/release/app-release.apk", # Path to the APK
-      destination: "Flutter Build Uploads",                # Folder name in Google Drive
-      shared: true                                         # Shareable link
+    # google_drive(
+    #   service_account_json_path: "credentials.json",  # Path to your JSON file
+    #   upload_file: "./app/build/outputs/apk/release/app-release.apk", # Path to the APK
+    #   destination: "1dW-zedQFzm-OuzvEDkdAADM7DLNTBaoT",                # Folder name in Google Drive
+    #   shared: true                                         # Shareable link
+    # )
+    
+    upload_to_google_drive(
+      drive_keyfile: '/Users/aeloi/mobile development/practice/new_app/android/fastlane/credentials.json',
+      service_account: true,
+      folder_id: '1dW-zedQFzm-OuzvEDkdAADM7DLNTBaoT',
+      upload_files: ['/Users/aeloi/mobile development/practice/new_app/build/app/outputs/apk/release/app-release.apk']
     )
   end
 end
