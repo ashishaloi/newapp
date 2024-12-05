@@ -1,0 +1,17 @@
+default_platform(:android)
+
+platform :android do
+  desc "Build APK and upload to Google Drive"
+  lane :upload_to_drive do
+    # Build the release APK
+    gradle(task: "assembleRelease")
+
+    # Authenticate with Google Drive
+    google_drive(
+      service_account_json_path: "credentials.json",  # Path to your JSON file
+      upload_file: "./app/build/outputs/apk/release/app-release.apk", # Path to the APK
+      destination: "Flutter Build Uploads",                # Folder name in Google Drive
+      shared: true                                         # Shareable link
+    )
+  end
+end
