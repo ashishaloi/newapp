@@ -7,84 +7,90 @@ on:
   pull_request:
     branches:
       - main
-      
+
 jobs:
   build:
     name: Build and Test Flutter App
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Checkout the code
-    - name: Checkout code
-      uses: actions/checkout@v3
+      # 1. Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    # 2. Set up Java 17
-    - name: Set up Java 17
-      uses: actions/setup-java@v3
-      with:
-        java-version: '17'
-        distribution: 'temurin'
+      # 2. Set up Java 17
+      - name: Set up Java 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-    # 3. Set up Flutter
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.24.2'
+      # 3. Set up Flutter
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.2'
 
-    # 4. Install dependencies
-    - name: Install dependencies
-      run: flutter pub get
+      # 4. Install dependencies
+      - name: Install dependencies
+        run: flutter pub get
 
-    # 5. Run tests
-    - name: Run tests
-      run: flutter test
+      # 5. Run tests
+      - name: Run tests
+        run: flutter test
 
-    # 6. Build APK
-    - name: Build APK
-      run: flutter build apk --release
+      # 6. Build APK
+      - name: Build APK
+        run: flutter build apk --release
 
-    # 7. Set up Python
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
+      # 7. Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
 
-    # 8. Install Google API Client for Python
-    - name: Install Google API client
-      run: |
-        python -m pip install --upgrade pip
-        pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+      # 8. Install Google API Client for Python
+      - name: Install Google API client
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
-    # 9. Upload APK to Google Drive using Python
-    - name: Upload APK to Google Drive
-      env:
-        GCP_CREDENTIALS: ${{ secrets.GOOGLE_DRIVE_CREDENTIALS }}  # The secret containing the service account JSON
-        DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}  # The ID of the Google Drive folder
-      run: |
-        # Create a Python script to upload the APK to Google Drive
-        echo "
-        import os
-        import json
-        from google.oauth2 import service_account
-        from googleapiclient.discovery import build
-        from googleapiclient.http import MediaFileUpload
+      # 9. Upload APK to Google Drive using Python
+      - name: Upload APK to Google Drive
+        env:
+          GOOGLE_DRIVE_CREDENTIALS: ${{ secrets.GOOGLE_DRIVE_CREDENTIALS }}
+          DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
+        run: |
+          echo "
+import os
+import json
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
 
-        # Load credentials from GitHub secret
-        credentials = service_account.Credentials.from_service_account_info(
-            json.loads(os.getenv('GOOGLE_DRIVE_CREDENTIALS'))
-        )
+# Load credentials from GitHub secret
+credentials = service_account.Credentials.from_service_account_info(
+    json.loads(os.getenv('GOOGLE_DRIVE_CREDENTIALS'))
+)
 
-        # Initialize the Drive API
-        service = build('drive', 'v3', credentials=credentials)
+# Initialize the Drive API
+service = build('drive', 'v3', credentials=credentials)
 
-        # Define the file metadata
-        file_metadata = {'name': 'app-release.apk', 'parents': ['${{ secrets.DRIVE_FOLDER_ID }}']}
-        media = MediaFileUpload('./build/app/outputs/flutter-apk/app-release.apk', mimetype='application/vnd.android.package-archive')
+# Define the file metadata
+folder_id = os.getenv('DRIVE_FOLDER_ID')
+file_metadata = {'name': 'app-release.apk', 'parents': [folder_id]}
 
-        # Upload the file
-        file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
-        print(f'Uploaded file ID: {file.get("id")}')
-        " > upload_to_drive.py
+# Path to the APK file
+file_path = './build/app/outputs/flutter-apk/app-release.apk'
+if not os.path.exists(file_path):
+    raise FileNotFoundError(f'File not found: {file_path}')
 
-        # Run the Python script to upload the APK to Google Drive
-        python3 upload_to_drive.py
+media = MediaFileUpload(file_path, mimetype='application/vnd.android.package-archive')
+
+# Upload the file
+file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+print(f'Uploaded file ID: {file.get("id")}')
+" > upload_to_drive.py
+
+          # Run the Python script to upload the APK to Google Drive
+          python3 upload_to_drive.py
