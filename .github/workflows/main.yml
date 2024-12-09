@@ -58,7 +58,7 @@ jobs:
     # 9. Upload APK to Google Drive using Python
     - name: Upload APK to Google Drive
       env:
-        GCP_CREDENTIALS: ${{ secrets.GOOGLE_DRIVE_CREDENTIALS }}  # The secret containing the service account JSON
+        GOOGLE_DRIVE_CREDENTIALS: ${{ secrets.GOOGLE_DRIVE_CREDENTIALS }}  # The secret containing the service account JSON
         DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}  # The ID of the Google Drive folder
       run: |
         # Create a Python script to upload the APK to Google Drive
@@ -71,7 +71,7 @@ jobs:
 
         # Load credentials from GitHub secret
         credentials = service_account.Credentials.from_service_account_info(
-            json.loads(os.getenv('GCP_CREDENTIALS'))
+            json.loads(os.getenv('GOOGLE_DRIVE_CREDENTIALS'))
         )
 
         # Initialize the Drive API
